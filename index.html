@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -90,6 +90,8 @@
       border-bottom: 1px solid #ddd;
     }
   </style>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
 <body>
   <div class="container">
@@ -134,6 +136,22 @@
   </div>
 
   <script>
+    //Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBw050PZmQ0HaWuvh8FjcGt-wuCCUcIh20",
+      authDomain: "mental-math-leaderboard.firebaseapp.com",
+      databaseURL: "https://mental-math-leaderboard-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "mental-math-leaderboard",
+      storageBucket: "mental-math-leaderboard.firebasestorage.app",
+      messagingSenderId: "583211317044",
+      appId: "1:583211317044:web:cc9e4c53dc84c9b6e0d761",
+      measurementId: "G-FFYCMYEVS6"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
     // Global variables
     let score = 0;
     let timeLeft = 100;
@@ -158,9 +176,6 @@
     const feedbackDisplay = document.getElementById("feedback");
     const resetLeaderboardBtn = document.getElementById("reset-leaderboard-btn");
 
-    // Load leaderboard on page load
-    updateLeaderboardDisplay();
-
     // Event Listeners
     startBtn.addEventListener("click", startCompetition);
     restartBtn.addEventListener("click", resetGame);
@@ -177,7 +192,7 @@
     function startCompetition() {
       studentName = nameInput.value.trim();
       if (studentName === "") {
-        alert("Please enter your name before starting the competition.");
+        alert("Please enter your name.");
         return;
       }
       startScreen.classList.add("hidden");
@@ -257,13 +272,11 @@
         scoreDisplay.textContent = "Score: " + score;
         feedbackDisplay.textContent = "Correct";
         feedbackDisplay.style.color = "green";
-        feedbackDisplay.classList.add("flash");
       } else {
         feedbackDisplay.textContent = "Incorrect";
         feedbackDisplay.style.color = "red";
-        feedbackDisplay.classList.add("flash");
       }
-      
+      feedbackDisplay.classList.add("flash");
       generateQuestion();
     }
 
@@ -272,8 +285,8 @@
       gameScreen.classList.add("hidden");
       endScreen.classList.remove("hidden");
       finalScoreDisplay.textContent = score;
-      addScoreToLeaderboard(studentName, score);
-      updateLeaderboardDisplay();
+      const newEntry = { name: studentName, score: score };
+      firebase.database().ref('leaderboard').push(newEntry);
     }
 
     // Reset the game for a new competition
@@ -285,30 +298,29 @@
       feedbackDisplay.textContent = "";
     }
 
-    // Add the current student's score to the leaderboard in local storage
-    function addScoreToLeaderboard(name, score) {
-      let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-      leaderboard.push({ name: name, score: score });
-      leaderboard.sort((a, b) => b.score - a.score);
-      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-    }
-
-    // Update the leaderboard display with stored scores
+    // Add the current score to the leaderboard and update leaderboard on browser
     function updateLeaderboardDisplay() {
-      let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
-      leaderboardList.innerHTML = "";
-      leaderboard.forEach((entry, index) => {
-        let li = document.createElement("li");
-        li.textContent = `${index + 1}. ${entry.name} - ${entry.score}`;
-        leaderboardList.appendChild(li);
+      firebase.database().ref("leaderboard").orderByChild("score").limitToLast(10).once("value", snapshot => {
+        const entries = [];
+        snapshot.forEach(child => entries.push(child.val()));
+        entries.sort((a, b) => b.score - a.score);
+        leaderboardList.innerHTML = "";
+        entries.forEach((entry, index) => {
+          const li = document.createElement("li");
+          li.textContent = `${index + 1}. ${entry.name} - ${entry.score}`;
+          leaderboardList.appendChild(li);
+        });
       });
     }
 
-    // Reset the leaderboard by clearing local storage and updating the display
+    // Reset the leaderboard
     function resetLeaderboard() {
-      localStorage.removeItem("leaderboard");
-      updateLeaderboardDisplay();
+      firebase.database().ref("leaderboard").remove();
+      leaderboardList.innerHTML = "";
     }
+
+    // Fetch leaderboard on load
+    updateLeaderboardDisplay();
   </script>
 </body>
 </html>
