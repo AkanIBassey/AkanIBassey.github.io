@@ -292,7 +292,14 @@
       endScreen.classList.remove("hidden");
       finalScoreDisplay.textContent = score;
       const newEntry = { name: studentName, score: score };
-      firebase.database().ref('leaderboard').push(newEntry);
+      firebase.database().ref('leaderboard').push(newEntry)
+      .then(() => {
+        // Refresh leaderboard after saving
+        updateLeaderboardDisplay();
+      })
+      .catch((error) => {
+        console.error("Failed to save score:", error);
+      });
     }
 
     // Reset the game for a new competition
