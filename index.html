@@ -90,7 +90,7 @@
       border-bottom: 1px solid #ddd;
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -136,6 +136,9 @@
   </div>
 
   <script>
+    //debug aid
+    console.log("Script Loaded")
+    
     //Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBw050PZmQ0HaWuvh8FjcGt-wuCCUcIh20",
